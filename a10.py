@@ -123,15 +123,16 @@ def get_birth_date(name: str) -> str:
 
     return match.group("birth")
 
-def get_nba_team(nba_coach: str) -> str:
-    infobox_text = clean_text(get_first_infobox_text(get_page_html(nba_coach)))
-    #print(infobox_text)
-    pattern = r"(?:Head coach|Coach)\s*[:\-]?\s*(?P<coach>[A-Za-z .'-]+)"
+def get_nba_head_coach(nba_team: str) -> str:
 
-    error_text = "Page infobox has no coach information"
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(nba_team)))
+    print(infobox_text)
+    pattern = r"(?:Head\s*coach|Coach)\s*[:\-]?\s*(?P<coach>[A-Za-z .'-]+)"
 
+    error_text = ("Page infobox has no head coach information")
     match = get_match(infobox_text, pattern, error_text)
-    return match.group("coach")
+
+    return match.group("head coach")
 
 # below are a set of actions. Each takes a list argument and returns a list of answers
 # according to the action and the argument. It is important that each function returns a
@@ -161,16 +162,16 @@ def polar_radius(matches: List[str]) -> List[str]:
     """
     return [get_polar_radius(matches[0])]
 
-def nba_team(matches: List[str]) -> List[str]:
-    """Returns head of nba team in matches
+def nba_head_coach(matches: List[str]) -> List[str]:
+    """Return the head coach of a single NBA team
 
     Args:
-        matches - match from pattern of nba team to find head coach of
+        matches - match from pattern of nba team to head coach of
 
     Returns:
         head coach of nba team
     """
-    return [get_nba_team(" ".join(matches))]
+    return [get_nba_head_coach(matches[0])]
 
 
 
@@ -189,7 +190,7 @@ Action = Callable[[List[str]], List[Any]]
 pa_list: List[Tuple[Pattern, Action]] = [
     ("when was % born".split(), birth_date),
     ("what is the polar radius of %".split(), polar_radius),
-    ("who is the nba coach of %".split(), nba_team)
+    ("who is the head coach of % ".split(), nba_head_coach),
     (["bye"], bye_action)
 ]
 
