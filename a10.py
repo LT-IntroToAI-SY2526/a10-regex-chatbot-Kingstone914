@@ -7,8 +7,19 @@ from typing import List, Callable, Tuple, Any, Match
 
 
 def get_page_html(title: str) -> str:
+    search_response = requests.get(
+        "https://en.wikipedia.org/w/api.php",
+        params={"action": "query", "list": "search", "srsearch": title, "format": "json"},
+        headers={"User-Agent": "intro-ai-class/1.0"},
+        timeout=10
+    )
+    results = search_response.json().get("query", {}).get("search", [])
+    if results:
+        title = results[0]["title"]  # use the top search result title
+        print(f"Searching Wikipedia for: {title}")
+    
     for attempt in range(5):
-        response = requests.get(
+        response = requests.get( 
             "https://en.wikipedia.org/w/api.php",
             params={
                 "action": "parse",
@@ -127,12 +138,24 @@ def get_nba_head_coach(nba_team: str) -> str:
 
     infobox_text = clean_text(get_first_infobox_text(get_page_html(nba_team)))
     print(infobox_text)
-    pattern = r"(?:Head\s*coach|Coach)\s*[:\-]?\s*(?P<coach>[A-Za-z .'-]+)"
+    pattern = r"(?:Head\s*coach|Coach)(?P<head>.*?)(?:Ownership)"
 
     error_text = ("Page infobox has no head coach information")
     match = get_match(infobox_text, pattern, error_text)
 
-    return match.group("head coach")
+    return match.group("head")
+
+def get_nba_arena(nba_team: str) -> str:
+
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(nba_team)))
+    print(infobox_text)
+    pattern = r"(?:Home\s*arena|Arena|Arenas)(?P<arena>.*?)(?:Location)"
+
+    error_text = ("Page infobox has no arena information")
+    match = get_match(infobox_text, pattern, error_text)
+
+    return match.group("arena")
+
 
 # below are a set of actions. Each takes a list argument and returns a list of answers
 # according to the action and the argument. It is important that each function returns a
@@ -173,6 +196,16 @@ def nba_head_coach(matches: List[str]) -> List[str]:
     """
     return [get_nba_head_coach(matches[0])]
 
+def nba_arena(matches: List[str]) -> List[str]:
+    """Return the arena of a single NBA team
+
+    Args:
+        matches - match from pattern of nba team to arena of
+
+    Returns:
+        arena of nba team
+    """
+    return [get_nba_arena(matches[0])]
 
 
 # dummy argument is ignored and doesn't matter
@@ -191,6 +224,7 @@ pa_list: List[Tuple[Pattern, Action]] = [
     ("when was % born".split(), birth_date),
     ("what is the polar radius of %".split(), polar_radius),
     ("who is the head coach of % ".split(), nba_head_coach),
+    ("where does % play". split(), nba_arena),
     (["bye"], bye_action)
 ]
 
