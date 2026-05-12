@@ -156,6 +156,17 @@ def get_nba_arena(nba_team: str) -> str:
 
     return match.group("arena")
 
+def get_nba_owner(nba_team: str) -> str:
+
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(nba_team)))
+    print(infobox_text)
+    pattern = r"(?:Ownership|Owners|Owner\(s\)|Principal\s*owner)(?P<ownership>.*?)(?:Affiliation)"
+
+    error_text = ("Page infobox has no owner information")
+    match = get_match(infobox_text, pattern, error_text)
+
+    return match.group("ownership")
+
 
 # below are a set of actions. Each takes a list argument and returns a list of answers
 # according to the action and the argument. It is important that each function returns a
@@ -207,6 +218,17 @@ def nba_arena(matches: List[str]) -> List[str]:
     """
     return [get_nba_arena(matches[0])]
 
+def nba_owner(matches: List[str]) -> List[str]:
+    """Return the owner of a single NBA team
+
+    Args:
+        matches - match from pattern of nba team to owner of
+
+    Returns:
+        owner of nba team
+    """
+    return [get_nba_owner(matches[0])]
+
 
 # dummy argument is ignored and doesn't matter
 def bye_action(dummy: List[str]) -> None:
@@ -225,6 +247,7 @@ pa_list: List[Tuple[Pattern, Action]] = [
     ("what is the polar radius of %".split(), polar_radius),
     ("who is the head coach of % ".split(), nba_head_coach),
     ("where does % play". split(), nba_arena),
+    ("who is the owner of %". split(), nba_owner),
     (["bye"], bye_action)
 ]
 
